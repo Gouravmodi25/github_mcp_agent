@@ -1,113 +1,136 @@
-<div align="center">
+# 🤖 MCP + LLM Agent Demo
 
-# 🚀 GitHub MCP Agent Integration
+### _A real LLM reads a live tool registry and decides what to run — on its own_
 
-**Next-Generation LLM Orchestration with Model Context Protocol**
-
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?style=for-the-badge&logo=python&logoColor=white)]()
-[![MCP](https://img.shields.io/badge/Protocol-MCP_v2-purple.svg?style=for-the-badge)]()
-[![LangChain](https://img.shields.io/badge/AI-LangChain-green.svg?style=for-the-badge)]()
-
-_A real-world demonstration of connecting an AI agent to GitHub's official remote MCP server for dynamic tool discovery and execution._
-
-</div>
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![MCP SDK](https://img.shields.io/badge/MCP%20SDK-v2-orange)
+![LangChain](https://img.shields.io/badge/LangChain-OpenAI--compatible-1C3C3C)
+![GitHub MCP](https://img.shields.io/badge/GitHub-Official%20MCP%20Server-181717?logo=github&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## 🌟 Overview
+## 🎯 What This Demonstrates
 
-This project acts as an **MCP Host/Client** that securely connects to GitHub's remote server. By combining the standardized **Model Context Protocol** with a **Large Language Model (LLM)**, this agent can dynamically:
+This is **Demo 2** of a two-part MCP teaching series. Where Demo 1 showed the raw plumbing manually, this demo shows the _complete real-world picture_:
 
-1. **Discover** available tools directly from GitHub in real-time.
-2. **Reason** about a user's natural language request.
-3. **Execute** the exact right repository operations (like querying pull requests) autonomously.
+- Connects to **GitHub's official, pre-built remote MCP server** — no server code written by us at all
+- Automatically fetches its full tool registry (`tools/list`)
+- Hands that registry + a plain-English question to an **LLM**
+- The LLM decides — entirely on its own — which tool fits and what arguments to use
+- That decision is executed for real (`tools/call`), and a **live** result comes back from GitHub
 
-## 🏗️ Architecture
+> Nothing is hardcoded about which tool runs. The model reads the menu and orders for itself.
 
-```mermaid
-graph LR
-    A[👤 User Query] --> B(app.py<br>MCP Client)
-    B <-->|1. Tool Discovery <br> 3. Tool Execution| C{🐙 GitHub MCP Server}
-    B <-->|2. System Prompt + Tools| D[🧠 LLM <br> LangChain]
-    D -->|JSON Tool Selection| B
-    C -->|Live Repository Data| B
-```
+---
 
-## ⚙️ Prerequisites
+## 🧩 How It's Different From Demo 1
 
-- 🐍 **Python 3.10** or higher
-- 🔑 **GitHub Personal Access Token (PAT)** _(Requires repository read permissions)_
-- 🧠 **LLM API Key** _(OpenAI or an OpenAI-compatible provider)_
+|                    | Demo 1 (Manual)             | Demo 2 (This one)              |
+| ------------------ | --------------------------- | ------------------------------ |
+| Server             | Custom-built by us          | Pre-built, official (GitHub)   |
+| Who picks the tool | You, manually, in Inspector | The LLM, automatically         |
+| Transport          | stdio (local process)       | Streamable HTTP (remote URL)   |
+| Goal               | Show the mechanics          | Show the full intelligent flow |
 
-## 🚀 Quick Start
+---
 
-### 1. Clone & Setup
+## 📋 Prerequisites
+
+- **Python 3.10+** — [download here](https://www.python.org/downloads/)
+- A **GitHub Personal Access Token** — free, from _Settings → Developer settings → Personal access tokens_
+- An LLM API key + base URL for your OpenAI-compatible gateway
+
+---
+
+## 🚀 Setup — Step by Step
 
 ```bash
-# Create a virtual environment
-python -m venv venv
+# 1. Create and enter the project folder
+mkdir mcp_llm_demo
+cd mcp_llm_demo
 
-# Activate the environment
-# On Windows use: venv\Scripts\activate
-source venv/bin/activate
+# 2. Create and activate a virtual environment
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# Mac/Linux:
+source .venv/bin/activate
 
-# Install core dependencies
-pip install mcp langchain-openai httpx python-dotenv
+# 3. Install dependencies
+pip install -r requirements.txt
 ```
 
-### 2. Configuration
+> ⚠️ **Windows PowerShell error?**
+> If activation fails with `running scripts is disabled on this system`, run this once:
+>
+> ```powershell
+> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+> ```
 
-Create a `.env` file in the root directory. This keeps your credentials secure and out of version control.
+### 🔑 Configure your keys
 
-```env
-# GitHub Configuration
+Copy `.env.example` → `.env` and fill in your real values:
+
+```
 GITHUB_PERSONAL_ACCESS_TOKEN=your_github_pat_here
-
-# LLM Configuration
 LLM_API_KEY=your_llm_api_key_here
-LLM_BASE_URL=[https://api.your-llm-provider.com/v1](https://api.your-llm-provider.com/v1)
-LLM_MODEL=gpt-5.6-luna
+LLM_BASE_URL=https://your-llm-gateway.example/v1
+LLM_MODEL=your-model-name
 ```
 
-### 3. Execution
+> 🔒 `.env` holds real secrets — never commit it or push it to GitHub.
 
-Fire up the intelligent agent:
+---
+
+## ▶️ Running the Demo
 
 ```bash
 python app.py
 ```
 
-<details>
-<summary>👀 <b>Click to see the expected terminal output</b></summary>
-<br>
+**What you'll see, step by step:**
 
-```text
-✅ Handshake complete! Server returned 15 tools.
-
-💬 User query: 'Please check the repository langchain-ai/langchain and tell me the title and author of the last raised pull request.'
-
-🎯 LLM's decision: {"tool": "get_pull_requests", "args": {"repo": "langchain-ai/langchain", "limit": 1}}
-
-🚀 Running the 'get_pull_requests' tool on the server...
-
+```
+✅ Handshake complete! Server returned N tools.
+💬 User query: 'Please check the repository "..." and tell me...'
+🎯 LLM's decision: {"tool": "...", "args": {...}}
+🚀 Running the '...' tool on the server...
 📦 Live result from GitHub:
-[Pull Request details stream here...]
+    <real PR title and author here>
 ```
 
-</details>
+### Want to check your own repo?
 
-## 🧠 Under the Hood: How it Works
+Edit the `user_query` in `app.py`:
 
-| Step            | Component                | Description                                                                                   |
-| :-------------- | :----------------------- | :-------------------------------------------------------------------------------------------- |
-| **1. Auth**     | `httpx`                  | Initializes an async HTTP client injected with your GitHub PAT for secure authorization.      |
-| **2. Connect**  | `streamable_http_client` | Opens a streamable connection to GitHub's MCP endpoint (`api.githubcopilot.com/mcp`).         |
-| **3. Discover** | `session.list_tools()`   | Dynamically fetches the server's capabilities. **No hardcoded tool schemas!**                 |
-| **4. Reason**   | `LangChain`              | Formats the discovered tools into a system prompt, instructing the LLM to return strict JSON. |
-| **5. Execute**  | `session.call_tool()`    | Parses the LLM's decision and routes it back to GitHub to fetch the real-world data.          |
+```python
+user_query = "Please check the repository 'your-username/your-repo' and tell me ..."
+```
+
+Works for private repos too — just make sure your PAT has the `repo` scope, not only `public_repo`.
 
 ---
 
-<div align="center">
-<i>Built with ❤️ using the Model Context Protocol</i>
-</div>
+## 📁 Project Structure
+
+```
+mcp_llm_demo/
+├── app.py              # LLM + MCP client — connects, discovers, decides, executes
+├── requirements.txt    # mcp, langchain-openai, python-dotenv
+├── .env.example        # Copy to .env and fill in real keys
+└── README.md
+```
+
+---
+
+## 🩹 Known Gotchas
+
+- **`ImportError: cannot import name 'streamablehttp_client'`** → you're on **MCP SDK v2**, where it was renamed to `streamable_http_client` with a new signature (headers now set via `httpx.AsyncClient`). This project's `app.py` already uses the v2-correct API.
+- **Flaky 500 errors from GitHub's MCP endpoint** → happens occasionally on their end; re-run, or test once before a live class demo.
+
+---
+
+## 💡 The Big Takeaway
+
+Once a tool registry exists (from _any_ MCP server — custom or pre-built), a model can act on it dynamically. Demo 1 proved the plumbing works; this demo proves an LLM can use that plumbing intelligently, without a developer hardcoding which tool answers which question.
